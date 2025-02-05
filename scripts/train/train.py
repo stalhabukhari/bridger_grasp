@@ -60,7 +60,7 @@ def parse_args():
     p.add_argument('--dataset_name', type=str, default='vanilla'
                    , help='dataset to use')
 
-    p.add_argument('--device', type=str, default='cuda:3', )
+    p.add_argument('--device', type=str, default='cuda:0', )
     p.add_argument('--class_type', type=str, default='Mug')
 
     opt = p.parse_args()
