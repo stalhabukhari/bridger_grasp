@@ -7,7 +7,7 @@
 
 from se3dif.samplers.grasp_vae_samplers import Grasp_VAE
 
-batch = 2000
+batch = 20
 def parse_args():
     p = configargparse.ArgumentParser()
     p.add('-c', '--config_filepath', required=False, is_config_file=True, help='Path to config file.')
@@ -55,7 +55,7 @@ def get_approximated_grasp_diffusion_field(p, args, device='cpu'):
     model.set_latent(context, batch=batch)
 
     ########### 2. SET SAMPLING METHOD #############
-    generator = Grasp_SI(model, T=5, device=device)
+    generator = Grasp_SI(model, T=40, device=device)
 
     return generator, model
 
@@ -67,6 +67,36 @@ def sample_pointcloud(obj_id=0, obj_class='Mug'):
     mesh = acronym_grasps.avail_obj[obj_id].load_mesh()
 
     P = mesh.sample(400)
+
+    # sampled_rot = scipy.spatial.transform.Rotation.random()
+    # rot = sampled_rot.as_matrix()
+    # rot_quat = sampled_rot.as_quat()
+    #
+    # P_mean = np.mean(P, 0)
+    # P += -P_mean
+    # P = np.einsum('mn,bn->bm', rot, P)
+    # P *= scale
+    #
+    #
+    # H = np.eye(4)
+    # H[:3,-1] = -P_mean
+    # mesh.apply_transform(H)
+    # translational_shift = copy.deepcopy(H)
+    # H = np.eye(4)
+    # H[:3,:3] = rot
+    # mesh.apply_transform(H)
+    # mesh.apply_scale(scale)
+    #
+    # # sample good grasps
+    # grasp_obj = acronym_grasps.avail_obj[obj_id]
+    # rix = np.random.randint(low=0, high=grasp_obj.good_grasps.shape[0], size=5)
+    # H_grasps = grasp_obj.good_grasps[rix, ...]
+    # H_grasps[..., :3, -1] = H_grasps[..., :3, -1] - P_mean
+    # # H = np.eye(4)
+    # # H[:3, :3] = rot
+    # H_grasps = np.einsum('mn,bnk->bmk', H, H_grasps)
+    #
+    # H_grasps[..., :3, -1] = H_grasps[..., :3, -1] * scale
 
     sampled_rot = scipy.spatial.transform.Rotation.random()
     # rot = sampled_rot.as_matrix()
@@ -106,21 +136,12 @@ if __name__ == '__main__':
 
     args = parse_args()
 
-    EVAL_SIMULATION = args.eval_sim
-    # isaac gym has to be imported here as it is supposed to be imported before torch
-    if (EVAL_SIMULATION):
-        # Alternatively: Evaluate Grasps in Simulation:
-        from isaac_evaluation.grasp_quality_evaluation import GraspSuccessEvaluator
-
-    from theseus import SO3
     from se3dif.utils import SO3_R3
-    import theseus as th
     from se3dif.samplers.grasp_si_samplers import Grasp_SI
     import scipy.spatial.transform
     import numpy as np
     from se3dif.datasets import AcronymGraspsDirectory
     from se3dif.models.loader import load_model
-    from se3dif.samplers import ApproximatedGrasp_AnnealedLD, Grasp_AnnealedLD
     from se3dif.utils import to_numpy, to_torch
 
     import torch
@@ -194,4 +215,4 @@ if __name__ == '__main__':
     vis_H = H_grasp.squeeze()
     P *= 1 / 8
     mesh = mesh.apply_scale(1 / 8)
-    grasp_visualization.visualize_grasps(to_numpy(H_grasp), p_cloud=P, mesh=mesh)
+    grasp_visualization.visualize_grasps(to_numpy(H), p_cloud=P, mesh=mesh)
